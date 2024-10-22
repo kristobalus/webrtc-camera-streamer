@@ -17,7 +17,7 @@ class CustomVideoStreamTrack(VideoStreamTrack):
         self.format = "rgb24"
         self.frame_rate = 30
 
-        self.cap = cv2.VideoCapture(camera_id)
+        self.cap = cv2.VideoCapture(camera_id, cv2.CAP_AVFOUNDATION)
         self.cap.set(cv2.CAP_PROP_FPS, self.frame_rate)
 
         w = self.cap.get(cv2.CAP_PROP_FRAME_WIDTH)
@@ -43,6 +43,7 @@ class CustomVideoStreamTrack(VideoStreamTrack):
 
         # Improve image quality by denoising
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        # frame = cv2.resize(frame, (int(1270/4), int(720/4)), interpolation=cv2.INTER_LANCZOS4)
 
         # Add timestamp to the frame
         # timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]  # Current time with milliseconds
