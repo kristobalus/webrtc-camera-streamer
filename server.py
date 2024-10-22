@@ -30,6 +30,8 @@ class CustomVideoStreamTrack(VideoStreamTrack):
         self.cap.set(cv2.CAP_PROP_CONTRAST, 0.5)
         self.cap.set(cv2.CAP_PROP_SATURATION, 0.5)
         self.cap.set(cv2.CAP_PROP_AUTOFOCUS, 1)
+        self.cap.set(cv2.CAP_PROP_AUTO_EXPOSURE, 0.25)
+        self.cap.set(cv2.CAP_PROP_EXPOSURE, -7)
 
     async def recv(self):
         self.frame_count += 1
