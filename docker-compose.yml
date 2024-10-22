@@ -12,6 +12,6 @@ services:
       - .:/app
     restart: unless-stopped
     privileged: true
-    # devices:
-    #  - "/dev/video1:/dev/video1"
+    devices:
+      - "/dev/video1:/dev/video1"
 
