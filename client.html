@@ -4,14 +4,11 @@
     <title>WebRTC Video Stream</title>
 </head>
 <body>
-    <h1>WebRTC Video Stream</h1>
-
-    <!-- Input for server address -->
     <label for="server-address">Server Address:</label>
     <input type="text" id="server-address" placeholder="http://127.0.0.1:9999/offer" value="http://127.0.0.1:9999/offer" />
     <button onclick="start()">Start Streaming</button>
 
-    <video id="video" autoplay playsinline></video>
+    <video id="video"  width="640" height="480" autoplay playsinline></video>
 
     <script>
         async function start() {
