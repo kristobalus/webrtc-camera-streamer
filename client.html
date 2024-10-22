@@ -6,10 +6,10 @@
 <body>
     <label for="server-address">Server Address:</label>
     <input type="text" id="server-address" placeholder="http://127.0.0.1:9999/offer" value="http://127.0.0.1:9999/offer" />
-    <button onclick="start()">Start Streaming</button>
-
-    <video id="video"  width="1270" height="720" autoplay playsinline></video>
-
+    <button onclick="start()">Start Streaming</button><br/>
+    <div>
+        <video id="video"  width="1024" height="576" autoplay playsinline></video>
+    </div>
     <script>
         async function start() {
             const pc = new RTCPeerConnection();

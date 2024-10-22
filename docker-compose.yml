@@ -6,12 +6,10 @@ services:
       dockerfile: Dockerfile
     ports:
       - "9999:9999"
-    environment:
-      - CAMERA_ID=0
     volumes:
       - .:/app
     restart: unless-stopped
     privileged: true
     devices:
-      - "/dev/video1:/dev/video1"
+      - "/dev/video1:/dev/video0"
 

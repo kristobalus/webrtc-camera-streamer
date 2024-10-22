@@ -13,19 +13,19 @@ import numpy as np
 class CustomVideoStreamTrack(VideoStreamTrack):
     def __init__(self, camera_id):
         super().__init__()
-        self.cap = cv2.VideoCapture(camera_id)
         self.frame_count = 0
         self.format = "rgb24"
-        self.frame_rate = 100
+        self.frame_rate = 30
+
+        self.cap = cv2.VideoCapture(camera_id)
+        self.cap.set(cv2.CAP_PROP_FPS, self.frame_rate)
 
         w = self.cap.get(cv2.CAP_PROP_FRAME_WIDTH)
         h = self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
         print('resolution is: ', w, 'x', h)
 
-        self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, w)
-        self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, h)
-        self.cap.set(cv2.CAP_PROP_FPS, self.frame_rate)
-
+        self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
+        self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
         self.cap.set(cv2.CAP_PROP_BRIGHTNESS, 0.5)
         self.cap.set(cv2.CAP_PROP_CONTRAST, 0.5)
         self.cap.set(cv2.CAP_PROP_SATURATION, 0.5)
@@ -40,13 +40,6 @@ class CustomVideoStreamTrack(VideoStreamTrack):
             return None
 
         # Improve image quality by denoising
-        # frame = cv2.fastNlMeansDenoisingColored(frame, None, 10, 10, 7, 21)
-        # Sharpen the image
-        # kernel = np.array([[0, -1, 0],
-        #                    [-1, 5, -1],
-        #                    [0, -1, 0]])
-        # frame = cv2.filter2D(src=frame, ddepth=-1, kernel=kernel)
-
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
         # Add timestamp to the frame
@@ -55,6 +48,7 @@ class CustomVideoStreamTrack(VideoStreamTrack):
 
         video_frame = VideoFrame.from_ndarray(frame, format=self.format)
         video_frame.pts = self.frame_count
+        video_frame.pict_type = "NONE"
         video_frame.time_base = fractions.Fraction(1, self.frame_rate)  # Use fractions for time_base
 
         return video_frame
