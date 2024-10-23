@@ -17,12 +17,12 @@ class CustomVideoStreamTrack(VideoStreamTrack):
         self.format = "rgb24"
         self.frame_rate = 30
 
-        self.cap = cv2.VideoCapture(camera_id, cv2.CAP_AVFOUNDATION)
+        self.cap = cv2.VideoCapture(camera_id)
         self.cap.set(cv2.CAP_PROP_FPS, self.frame_rate)
 
         w = self.cap.get(cv2.CAP_PROP_FRAME_WIDTH)
         h = self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
-        print('resolution is: ', w, 'x', h)
+        print("resolution is: ", w, "x", h)
 
         self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
         self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
@@ -30,8 +30,8 @@ class CustomVideoStreamTrack(VideoStreamTrack):
         self.cap.set(cv2.CAP_PROP_CONTRAST, 0.5)
         self.cap.set(cv2.CAP_PROP_SATURATION, 0.5)
         self.cap.set(cv2.CAP_PROP_AUTOFOCUS, 1)
-        self.cap.set(cv2.CAP_PROP_AUTO_EXPOSURE, 0.25)
-        self.cap.set(cv2.CAP_PROP_EXPOSURE, -7)
+        self.cap.set(cv2.CAP_PROP_AUTO_EXPOSURE, 1)
+        # self.cap.set(cv2.CAP_PROP_EXPOSURE, 1)
 
     async def recv(self):
         self.frame_count += 1
@@ -40,6 +40,15 @@ class CustomVideoStreamTrack(VideoStreamTrack):
         if not ret:
             print("Failed to read frame from camera")
             return None
+
+        # Convert to YUV color space
+        yuv = cv2.cvtColor(frame, cv2.COLOR_BGR2YUV)
+
+        # Apply histogram equalization on the Y channel (brightness)
+        yuv[:, :, 0] = cv2.equalizeHist(yuv[:, :, 0])
+
+        # Convert back to BGR
+        frame = cv2.cvtColor(yuv, cv2.COLOR_YUV2BGR)
 
         # Improve image quality by denoising
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
@@ -52,7 +61,9 @@ class CustomVideoStreamTrack(VideoStreamTrack):
         video_frame = VideoFrame.from_ndarray(frame, format=self.format)
         video_frame.pts = self.frame_count
         video_frame.pict_type = "NONE"
-        video_frame.time_base = fractions.Fraction(1, self.frame_rate)  # Use fractions for time_base
+        video_frame.time_base = fractions.Fraction(
+            1, self.frame_rate
+        )  # Use fractions for time_base
 
         return video_frame
 
@@ -104,19 +115,17 @@ async def cleanup_pcs():
 
 
 app = web.Application()
-app.add_routes([
-    web.get("/", index),
-    web.post("/offer", offer)
-])
+app.add_routes([web.get("/", index), web.post("/offer", offer)])
 
 # Set up CORS
-cors = setup(app, defaults={
-    "*": ResourceOptions(
-        allow_credentials=True,
-        expose_headers="*",
-        allow_headers="*"
-    )
-})
+cors = setup(
+    app,
+    defaults={
+        "*": ResourceOptions(
+            allow_credentials=True, expose_headers="*", allow_headers="*"
+        )
+    },
+)
 
 # Add CORS to all routes
 for route in list(app.router.routes()):
