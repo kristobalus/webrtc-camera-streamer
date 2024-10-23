@@ -40,15 +40,43 @@ class CustomVideoStreamTrack(VideoStreamTrack):
         if not ret:
             print("Failed to read frame from camera")
             return None
+        
+        # frame = cv2.fastNlMeansDenoisingColored(frame, None, 10, 10, 7, 21)
+        
+        # def adjust_gamma(image, gamma=1.0):
+        #     invGamma = 1.0 / gamma
+        #     table = np.array([((i / 255.0) ** invGamma) * 255
+        #                     for i in np.arange(0, 256)]).astype("uint8")
+        #     return cv2.LUT(image, table)
 
-        # Convert to YUV color space
-        yuv = cv2.cvtColor(frame, cv2.COLOR_BGR2YUV)
+        # # Apply gamma correction
+        # frame = adjust_gamma(frame, gamma=1.2)  # Increase gamma for brightness
+        
+        # Create a sharpening kernel
+        # sharpening_kernel = np.array([[0, -1, 0],
+        #                             [-1, 5, -1],
+        #                             [0, -1, 0]])
 
-        # Apply histogram equalization on the Y channel (brightness)
-        yuv[:, :, 0] = cv2.equalizeHist(yuv[:, :, 0])
+        # # Apply the sharpening filter
+        # frame = cv2.filter2D(frame, -1, sharpening_kernel)
+        
+        # # Create an edge enhancement kernel
+        # edge_enhancement_kernel = np.array([[0, 0, 0],
+        #                                     [-1, 1, 0],
+        #                                     [0, 0, 0]])
+        # # Apply the filter
+        # frame = cv2.filter2D(frame, -1, edge_enhancement_kernel)
 
-        # Convert back to BGR
-        frame = cv2.cvtColor(yuv, cv2.COLOR_YUV2BGR)
+        # -- Histogram Equalization (Contrast Enhancement):
+        # # Convert to YUV color space
+        # yuv = cv2.cvtColor(frame, cv2.COLOR_BGR2YUV)
+
+        # # Apply histogram equalization on the Y channel (brightness)
+        # yuv[:, :, 0] = cv2.equalizeHist(yuv[:, :, 0])
+
+        # # Convert back to BGR
+        # frame = cv2.cvtColor(yuv, cv2.COLOR_YUV2BGR)
+        # -- end of histogram
 
         # Improve image quality by denoising
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)

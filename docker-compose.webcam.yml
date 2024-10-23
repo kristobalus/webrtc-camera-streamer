@@ -1,0 +1,11 @@
+
+services:
+  webrtc-server:
+    build:
+      context: .
+      dockerfile: Dockerfile.webcam
+    volumes:
+      - .:/app
+    restart: unless-stopped
+    privileged: true
+    network_mode: host
