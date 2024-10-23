@@ -1,18 +1,83 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <title>WebRTC Video Stream</title>
 </head>
+
 <body>
     <label for="server-address">Server Address:</label>
-    <input type="text" id="server-address" placeholder="http://127.0.0.1:9999/offer" value="http://127.0.0.1:9999/offer" />
-    <button onclick="start()">Start Streaming</button><br/>
+    <input type="text" id="server-address" placeholder="http://127.0.0.1:9999/offer"
+        value="http://127.0.0.1:9999/offer" />
+    <button onclick="start()">Start Streaming</button><br />
     <div>
-        <video id="video" width="400" height="320" controls="controls" autoplay>            
+        <p>Test</p>
+        <video id="video" width="400" height="320" controls="controls" autoplay>
             Тег video не поддерживается вашим браузером.
         </video>
     </div>
     <script>
+        function sdpFilterCodec(kind, codec, realSdp) {
+            var allowed = []
+            var rtxRegex = new RegExp('a=fmtp:(\\d+) apt=(\\d+)\r$');
+            var codecRegex = new RegExp('a=rtpmap:([0-9]+) ' + escapeRegExp(codec))
+            var videoRegex = new RegExp('(m=' + kind + ' .*?)( ([0-9]+))*\\s*$')
+
+            var lines = realSdp.split('\n');
+
+            var isKind = false;
+            for (var i = 0; i < lines.length; i++) {
+                if (lines[i].startsWith('m=' + kind + ' ')) {
+                    isKind = true;
+                } else if (lines[i].startsWith('m=')) {
+                    isKind = false;
+                }
+
+                if (isKind) {
+                    var match = lines[i].match(codecRegex);
+                    if (match) {
+                        allowed.push(parseInt(match[1]));
+                    }
+
+                    match = lines[i].match(rtxRegex);
+                    if (match && allowed.includes(parseInt(match[2]))) {
+                        allowed.push(parseInt(match[1]));
+                    }
+                }
+            }
+
+            var skipRegex = 'a=(fmtp|rtcp-fb|rtpmap):([0-9]+)';
+            var sdp = '';
+
+            isKind = false;
+            for (var i = 0; i < lines.length; i++) {
+                if (lines[i].startsWith('m=' + kind + ' ')) {
+                    isKind = true;
+                } else if (lines[i].startsWith('m=')) {
+                    isKind = false;
+                }
+
+                if (isKind) {
+                    var skipMatch = lines[i].match(skipRegex);
+                    if (skipMatch && !allowed.includes(parseInt(skipMatch[2]))) {
+                        continue;
+                    } else if (lines[i].match(videoRegex)) {
+                        sdp += lines[i].replace(videoRegex, '$1 ' + allowed.join(' ')) + '\n';
+                    } else {
+                        sdp += lines[i] + '\n';
+                    }
+                } else {
+                    sdp += lines[i] + '\n';
+                }
+            }
+
+            return sdp;
+        }
+
+        function escapeRegExp(string) {
+            return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // $& means the whole matched string
+        }
+
         async function start() {
             const pc = new RTCPeerConnection();
 
@@ -33,6 +98,13 @@
             });
             await pc.setLocalDescription(offer);
 
+            console.log(offer)
+            
+            const codec = 'VP8/90000';
+            // const codec = 'H264/90000';
+            offer.sdp = sdpFilterCodec('video', codec, offer.sdp);
+            console.log(offer)
+
             // Send offer to the Python server
             const response = await fetch(serverAddress, {
                 method: "POST",
@@ -52,4 +124,5 @@
         }
     </script>
 </body>
+
 </html>
