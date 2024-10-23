@@ -16,8 +16,5 @@ RUN apt-get update && apt-get install -y \
     libglib2.0-0 \
     && rm -rf /var/lib/apt/lists/*
 
-# Expose port 9999 for WebRTC
-EXPOSE 9999
-
 # Run the Python server
 CMD ["python", "server.py"]

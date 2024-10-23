@@ -58,7 +58,7 @@ class CustomVideoStreamTrack(VideoStreamTrack):
 
 
 async def index(request):
-    content = open("client.html", "r").read()
+    content = open("index.html", "r").read()
     return web.Response(content_type="text/html", text=content)
 
 
