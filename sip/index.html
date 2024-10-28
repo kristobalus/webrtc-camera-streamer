@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple WebRTC with SIP.js</title>
+    <script src="https://github.com/onsip/SIP.js/releases/download/0.21.2/sip-0.21.2.js"></script>
+    <style>
+        video {
+            border: 1px solid lightgrey;
+        }
+    </style>
+</head>
+<body>
+    <h1>Simple WebRTC Call</h1>
+
+    <div>
+        <button id="callButton">Call</button>
+        <button id="hangupButton" disabled>Hang Up</button>
+    </div>
+
+    <video id="remoteVideo"></video>
+    <video id="localVideo" muted="muted"></video>
+    <button id="endCall">End Call</button>
+    <!-- sip.js is included by JsFiddle as External Resources -->
+
+    <script>
+        /*
+         * Check out the full guide at
+         *   http://sipjs.com/guides/make-call/
+         *
+         * This sample uses
+         *   http://sipjs.com/download/sip-0.13.5.min.js
+         *
+         * Login with your developer account to receive calls at
+         *   http://sipjs.com/demo-phone
+         */
+
+        //here you determine whether the call has video and audio
+        var options = {
+              media: {
+                local: {
+                  video: document.getElementById('localVideo')
+                },
+                remote: {
+                  video: document.getElementById('remoteVideo'),
+                  // This is necessary to do an audio/video call as opposed to just a video call
+                  audio: document.getElementById('remoteVideo')
+                }
+              },
+              ua: {}
+            };
+        var simple = new SIP.Web.SimpleUser();
+
+        var endButton = document.getElementById('endCall');
+        endButton.addEventListener("click", function () {
+            simple.hangup();
+            alert("Call Ended");
+        }, false);
+
+        //makes the call
+        simple.call('user@127.0.0.1:5060');
+    </script>
+</body>
+</html>

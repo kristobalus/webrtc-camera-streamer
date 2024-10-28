@@ -11,6 +11,6 @@ services:
     restart: unless-stopped
     privileged: true
     network_mode: host
-    devices:
-      - "/dev/video1:/dev/video0"
+    environment:
+      CAMERA_ID: 0
 

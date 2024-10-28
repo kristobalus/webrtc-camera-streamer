@@ -1,13 +1,12 @@
 import cv2
 import asyncio
-import aiohttp
 from aiohttp import web
 from aiortc import RTCPeerConnection, RTCSessionDescription, VideoStreamTrack
 from av import VideoFrame
 import fractions
-from datetime import datetime
 from aiohttp_cors import ResourceOptions, setup
-import numpy as np
+
+pcs = set()
 
 
 class CustomVideoStreamTrack(VideoStreamTrack):
@@ -40,9 +39,9 @@ class CustomVideoStreamTrack(VideoStreamTrack):
         if not ret:
             print("Failed to read frame from camera")
             return None
-        
+
         # frame = cv2.fastNlMeansDenoisingColored(frame, None, 10, 10, 7, 21)
-        
+
         # def adjust_gamma(image, gamma=1.0):
         #     invGamma = 1.0 / gamma
         #     table = np.array([((i / 255.0) ** invGamma) * 255
@@ -51,7 +50,7 @@ class CustomVideoStreamTrack(VideoStreamTrack):
 
         # # Apply gamma correction
         # frame = adjust_gamma(frame, gamma=1.2)  # Increase gamma for brightness
-        
+
         # Create a sharpening kernel
         # sharpening_kernel = np.array([[0, -1, 0],
         #                             [-1, 5, -1],
@@ -59,7 +58,7 @@ class CustomVideoStreamTrack(VideoStreamTrack):
 
         # # Apply the sharpening filter
         # frame = cv2.filter2D(frame, -1, sharpening_kernel)
-        
+
         # # Create an edge enhancement kernel
         # edge_enhancement_kernel = np.array([[0, 0, 0],
         #                                     [-1, 1, 0],
@@ -96,17 +95,8 @@ class CustomVideoStreamTrack(VideoStreamTrack):
         return video_frame
 
 
-async def index(request):
-    content = open("index.html", "r").read()
-    return web.Response(content_type="text/html", text=content)
-
-
-async def offer(request):
-    params = await request.json()
-    print(params)
-
-    camera_id = params["camera_id"]
-    offer = RTCSessionDescription(sdp=params["sdp"], type=params["type"])
+async def create_sdp_answer(sdp):
+    offer = RTCSessionDescription(sdp=sdp, type="offer")
 
     pc = RTCPeerConnection()
     pcs.add(pc)
@@ -118,7 +108,7 @@ async def offer(request):
             pcs.discard(pc)
 
     # Add webcam video track to the peer connection
-    video_track = CustomVideoStreamTrack(camera_id)
+    video_track = CustomVideoStreamTrack(0)
     pc.addTrack(video_track)
 
     # Set remote description and create answer
@@ -126,12 +116,7 @@ async def offer(request):
     answer = await pc.createAnswer()
     await pc.setLocalDescription(answer)
 
-    return web.json_response(
-        {"sdp": pc.localDescription.sdp, "type": pc.localDescription.type}
-    )
-
-
-pcs = set()
+    return pc.localDescription.sdp
 
 
 async def cleanup_pcs():
@@ -142,21 +127,38 @@ async def cleanup_pcs():
                 pcs.discard(pc)
 
 
-app = web.Application()
-app.add_routes([web.get("/", index), web.post("/offer", offer)])
+async def on_web_index(request):
+    content = open("web/index.html", "r").read()
+    return web.Response(content_type="text/html", text=content)
 
-# Set up CORS
-cors = setup(
-    app,
-    defaults={
-        "*": ResourceOptions(
-            allow_credentials=True, expose_headers="*", allow_headers="*"
-        )
-    },
-)
 
-# Add CORS to all routes
-for route in list(app.router.routes()):
-    cors.add(route)
+async def on_web_offer(request):
+    params = await request.json()
+    print(params)
+    sdp_answer = await create_sdp_answer(params["sdp"])
+    return web.json_response(
+        {"sdp": sdp_answer, "type": "answer"}
+    )
 
-web.run_app(app, port=9999)
+
+def main():
+    # Start the WebRTC server
+    app = web.Application()
+    app.add_routes([web.get("/", on_web_index), web.post("/offer", on_web_offer)])
+
+    # Set up CORS
+    cors = setup(
+        app,
+        defaults={
+            "*": ResourceOptions(
+                allow_credentials=True, expose_headers="*", allow_headers="*"
+            )
+        },
+    )
+    for route in list(app.router.routes()):
+        cors.add(route)
+
+    web.run_app(app, port=9999)
+
+
+main()

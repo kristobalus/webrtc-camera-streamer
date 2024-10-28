@@ -120,7 +120,7 @@
             const answer = await response.json();
 
             // Set remote description
-            await pc.setRemoteDescription(new RTCSessionDescription(answer));
+            await pc.setRemoteDescription(new RTCSessionDescription({ sdp: answer.sdp, type: answer.type }));
         }
     </script>
 </body>
